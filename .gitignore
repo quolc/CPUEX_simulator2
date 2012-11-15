@@ -13,3 +13,9 @@
 
 # Tmp files
 *.swp
+
+# Input / Output files
+*.s
+
+# Excecutables
+core/core
