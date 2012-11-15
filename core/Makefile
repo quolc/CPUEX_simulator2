@@ -1,8 +1,8 @@
 CXX = g++
 CXXFLAGS = -O4 -Wall
-LDFLAGS = -lm -lboost_program_options-mt
+LDFLAGS = -lm -lboost_program_options-mt -lboost_regex-mt
 
-SRCS=main.cpp
+SRCS=opland.cpp instruction.cpp program.cpp main.cpp
 OBJS=$(subst .cpp,.o,$(SRCS))
 
 all: core clean-middle

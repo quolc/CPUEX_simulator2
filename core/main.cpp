@@ -1,6 +1,8 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 
+#include "program.h"
+
 using namespace std;
 using namespace boost::program_options;
 
@@ -17,7 +19,7 @@ using namespace boost::program_options;
  * -M 1024  ... set the memory size (W).
  */
 int main(int argc, char* argv[]) {
-    cout << "CPU Simulator for CPUEX IIDX tricoro's 2nd Architecture.\n" << endl;
+    cerr << "CPU Simulator for IIDX tricoro's 2nd Architecture.\n" << endl;
 
     // Command Line Arguments Processing
     options_description options("Options");
@@ -40,11 +42,11 @@ int main(int argc, char* argv[]) {
         notify(vm);
 
         if (argc < 2) {
-            cout << "!! Please Specify the Assembly File Name as the First Argument. !!\n" << endl;
+            cerr << "!! Please Specify the Assembly File Name as the First Argument. !!\n" << endl;
             return 0;
         }
         if (vm.count("help")) {
-            cout << options << endl;
+            cerr << options << endl;
             return 0;
         }
 
@@ -53,15 +55,21 @@ int main(int argc, char* argv[]) {
         if (vm.count("single"))
             single = true;
     } catch(exception &e) {
-        cout << options << endl;
-        cout << e.what() << endl;
+        cerr << options << endl;
+        cerr << e.what() << endl;
     }
 
-    cout << "Assembly File: " << argv[1] << endl;
     if (remote)
-        cout << "-- Remote Debugging Mode (port " << port << ")" << endl;
+        cerr << "-- Remote Debugging Mode (port " << port << ")" << endl;
     if (single)
-        cout << "-- Single Clock Mode" << endl;
+        cerr << "-- Single Clock Mode" << endl;
+
+    // Parse Assembly File
+    Program program(argv[1]);
+    if (!program.loadAssembly()) {
+        cerr << "failed to load assembly." << endl;
+        return 0;
+    }
 
     return 0;
 }
