@@ -26,17 +26,20 @@ class Instruction {
 public:
     // instruction properties
     OpCode opcode;
+    Opland oplands[MAXIMUM_OPLAND];
+
     Condition condition;
     bool fl;
     bool immediate;
     bool conditionset;
-    string raw;
 
-    Opland oplands[MAXIMUM_OPLAND];
+    string raw;
+    int line;
 
     // meta parameters
     string tag;
     bool failed;
+    bool hlt;
 
     // methods
     Instruction();

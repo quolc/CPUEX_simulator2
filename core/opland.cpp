@@ -5,5 +5,6 @@ using namespace std;
 
 Opland::Opland() {
     this->null = false;
+    this->type = R;
 }
 

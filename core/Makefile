@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -O4 -Wall
 LDFLAGS = -lm -lboost_program_options-mt -lboost_regex-mt
 
-SRCS=opland.cpp instruction.cpp program.cpp main.cpp
+SRCS=opland.cpp instruction.cpp program.cpp simulation.cpp singleclocksimulation.cpp main.cpp
 OBJS=$(subst .cpp,.o,$(SRCS))
 
 all: core clean-middle

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include "instruction.h"
 #include "program.h"
@@ -43,6 +44,7 @@ bool Program::loadAssembly() {
                 cerr << "failed to parse instruction at line " << l << endl;
                 return false;
             }
+            instruction.line = instructions.size();
             this->instructions.push_back(instruction);
         } else { // label
             if (str2[str2.size() - 1] != ':') {
@@ -60,9 +62,73 @@ bool Program::loadAssembly() {
         }
     }
 
-    // label insertion for hlt pseudo-instruction
+    // label insertion for pseudo-instructions
+    // hlt
+    // subi
+    // mov
+    // nop
+    vector<Instruction>::iterator itr;
+    for (itr = this->instructions.begin(); itr != this->instructions.end(); itr++) {
+        if (itr->opcode == HLT) {
+            // generate a label
+            string hlt_label = (boost::format("hlt_here_%d") % itr->line).str();
+            this->labels[hlt_label] = itr->line;
+            // hlt -> jmp
+            itr->opcode = JMP;
+            itr->oplands[0].type = J;
+            itr->oplands[0].label = hlt_label;
+            itr->hlt = true;
+        } else if (itr->opcode == SUB && !itr->fl && itr->immediate) {
+            itr->opcode = ADD;
+            itr->oplands[2].immediate = -(itr->oplands[2].immediate);
+        } else if (itr->opcode == MOV && !itr->fl) {
+            itr->opcode = ADD;
+            itr->immediate = true;
+            itr->oplands[2].type = I;
+            itr->oplands[2].immediate = 0;
+        } else if (itr->opcode == NOP) {
+            itr->opcode = ADD;
+            itr->immediate = true;
+            itr->oplands[0].type = R;
+            itr->oplands[1].type = R;
+            itr->oplands[2].type = I;
+            itr->oplands[0].index = 0;
+            itr->oplands[1].index = 0;
+            itr->oplands[2].immediate = 0;
+        }
+    }
 
-    // do macro procsesing
+    // h16(), l16() macro processing
+    for (itr = this->instructions.begin(); itr != this->instructions.end(); itr++) {
+        cerr << itr->raw << endl;
+        for (int i=0; i<MAXIMUM_OPLAND; i++) {
+            Opland* opland = &(itr->oplands[i]);
+            int addr = -1;
+            if (opland->type == A_H || opland->type == A_L) {
+                map<string, int>::iterator i = this->labels.find(opland->label);
+                if (i == this->labels.end()) {
+                    cerr << "missing label " << opland->label << " at line" << (itr->line) << endl;
+                    return false;
+                } else {
+                    addr = labels[opland->label];
+                }
+            }
+            if (opland->type == A_H) {
+                opland->type = I;
+                opland->immediate = addr >> 16;
+            } else if (opland->type == A_L) {
+                opland->type = I;
+                opland->immediate = addr & 65535;
+            }
+        }
+    }
+
+    // jump label validation
+    for (itr = this->instructions.begin(); itr != this->instructions.end(); itr++) {
+        
+    }
+
+    if (l==0) return false;
 
     return true;
 }

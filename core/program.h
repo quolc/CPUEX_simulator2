@@ -11,6 +11,7 @@ public:
     std::vector<Instruction> instructions;
     std::map<string, int> labels;
 
+    // functions
     Program(char*);
     bool loadAssembly();
 };

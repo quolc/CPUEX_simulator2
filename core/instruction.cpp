@@ -28,6 +28,7 @@ map<Condition, string> condition_string_map;
 
 Instruction::Instruction() {
     this->failed = false;
+    this->hlt = false;
 }
 
 Instruction parseInstruction(string str) {

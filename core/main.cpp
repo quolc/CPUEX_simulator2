@@ -2,6 +2,8 @@
 #include <boost/program_options.hpp>
 
 #include "program.h"
+#include "simulation.h"
+#include "singleclocksimulation.h"
 
 using namespace std;
 using namespace boost::program_options;
@@ -23,7 +25,7 @@ int main(int argc, char* argv[]) {
 
     // Command Line Arguments Processing
     options_description options("Options");
- 
+
     int port = 0;
     bool remote = false;
     bool single = false;
@@ -71,5 +73,20 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // Initialize Simulation
+    Simulation* s;
+    if (single) {
+        s = new SingleClockSimulation(&program, remote, memory);
+    } else {
+        // TODO: MultiClockSimulation
+    }
+
+    s->init();
+    s->run();
+    s->finalize();
+
+    delete(s);
+
     return 0;
 }
+
