@@ -29,6 +29,7 @@ map<Condition, string> condition_string_map;
 Instruction::Instruction() {
     this->failed = false;
     this->hlt = false;
+    this->condition = AL;
 }
 
 Instruction parseInstruction(string str) {
@@ -75,7 +76,7 @@ Instruction parseInstruction(string str) {
             instruction.failed = true;
             return instruction;
         }
-        string opcode = operation.substr(p, p+3);
+        string opcode = operation.substr(p, 3);
         map<OpCode, string>::iterator itr;
         for (itr = opcode_string_map.begin(); itr != opcode_string_map.end(); itr++) {
             if (itr->second == opcode) {
@@ -108,8 +109,9 @@ Instruction parseInstruction(string str) {
         }
 
         // condition flags
+        instruction.condition = AL;
         if ((int)operation.size() > p+1) {
-            string condstr = operation.substr(p, p+2);
+            string condstr = operation.substr(p, 2);
             map<Condition, string>::iterator conditr;
             for (conditr = condition_string_map.begin(); conditr != condition_string_map.end(); conditr++) {
                 if (boost::iequals(conditr->second, condstr)) {

@@ -3,6 +3,10 @@
 #include "simulation.h"
 #include "singleclocksimulation.h"
 
+#include <sys/time.h>
+
+struct timeval start, end;
+
 bool (SingleClockSimulation::*procTable[])(Instruction*) = {
     &SingleClockSimulation::proc_mov,
     &SingleClockSimulation::proc_mif,
@@ -61,7 +65,7 @@ SingleClockSimulation::~SingleClockSimulation() {
 }
 
 void SingleClockSimulation::init() {
-    cerr << "Initializing Simulation..." << endl;
+    cerr << "initializing simulation..." << endl;
 
     pc = 0;
 
@@ -79,90 +83,192 @@ void SingleClockSimulation::init() {
 
     issued_count = 0;
     executed_count = 0;
+
+    cerr << "done." << endl;
 }
 
 void SingleClockSimulation::run() {
+    cerr << "runnnig simulation..." << endl;
+
+    gettimeofday(&start, NULL);
+
     while (!isStopped) {
+        if (issued_count % 10000000 == 0) {
+            cerr << issued_count << endl;
+        }
+
         step();
     }
+
+    gettimeofday(&end, NULL);
+    double microseconds = (end.tv_sec - start.tv_sec) * 1000 * 1000 + (end.tv_usec - start.tv_usec);
+    double seconds = microseconds / 1000000;
+    cerr << microseconds / 1000 << " ms" << endl;
+    cerr << (int)(issued_count / seconds) << " instructions/s" << endl;
 }
 
 void SingleClockSimulation::finalize() {
-}
-
-bool SingleClockSimulation::willExecuteNextStep() {
-    Instruction* instruction = &(this->program->instructions[pc]);
-
-    switch (instruction->condition) {
-        case AL:
-            return true;
-        case NV:
-            break;
-        case EQ:
-            if (cz) return true;
-            break;
-        case NE:
-            if (!cz) return true;
-            break;
-        case MI:
-            if (cn) return true;
-            break;
-        case PL:
-            if (!cn) return true;
-            break;
-        case VS:
-            if (cv) return true;
-            break;
-        case VC:
-            if (!cv) return true;
-            break;
-        case CS:
-            if (cc) return true;
-            break;
-        case CC:
-            if (!cc) return true;
-            break;
-        case HI:
-            if (cc && !cz) return true;
-            break;
-        case LS:
-            if (!cc || cz) return true;
-            break;
-        case GE:
-            if (cn == cv) return true;
-            break;
-        case LT:
-            if (cn != cv) return true;
-            break;
-        case GT:
-            if (!cz && (cn == cv)) return true;
-            break;
-        case LE:
-            if (cz && (cn != cv)) return true;
-            break;
-    }
-
-    return false;
+    cerr << "total " << (long)executed_count << " instructions executed." << endl;
+    cerr << "total " << (long)issued_count << " instructions issueed." << endl;
 }
 
 void SingleClockSimulation::step() {
-    if (pc >= (int)(program->instructions.size()) || pc < 0) {
+    bool ret = true;;
+    bool condition = false;;
+    if (pc >= (program->instructions.size())) {
         this->exit = true;
         cerr << "program exited." << endl;
         return;
     }
 
     Instruction* inst = &(program->instructions[pc]);
-    pc++;
     issued_count++;
 
-    if (willExecuteNextStep()) {
+    pc++;
+
+    switch (inst->condition) {
+        case AL:
+            condition = true;
+        case NV:
+            break;
+        case EQ:
+            if (cz) condition = true;
+            break;
+        case NE:
+            if (!cz) condition = true;
+            break;
+        case MI:
+            if (cn) condition = true;
+            break;
+        case PL:
+            if (!cn) condition = true;
+            break;
+        case VS:
+            if (cv) condition = true;
+            break;
+        case VC:
+            if (!cv) condition = true;
+            break;
+        case CS:
+            if (cc) condition = true;
+            break;
+        case CC:
+            if (!cc) condition = true;
+            break;
+        case HI:
+            if (cc && !cz) condition = true;
+            break;
+        case LS:
+            if (!cc || cz) condition = true;
+            break;
+        case GE:
+            if (cn == cv) condition = true;
+            break;
+        case LT:
+            if (cn != cv) condition = true;
+            break;
+        case GT:
+            if (!cz && (cn == cv)) condition = true;
+            break;
+        case LE:
+            if (cz && (cn != cv)) condition = true;
+            break;
+    }
+
+    if (condition) {
         executed_count++;
-        bool ret = true;
-        ret = (this->*procTable[inst->opcode])(inst);
+//        ret = (this->*procTable[inst->opcode])(inst);
+        switch (inst->opcode) {
+            case MOV:
+                ret = proc_mov(inst);
+                break;
+            case MIF:
+                ret = proc_mif(inst);
+                break;
+            case MFI:
+                ret = proc_mfi(inst);
+                break;
+            case LDW:
+                ret = proc_ldw(inst);
+                break;
+            case LDF:
+                ret = proc_ldf(inst);
+                break;
+            case STW:
+                ret = proc_stw(inst);
+                break;
+            case STF:
+                ret = proc_stf(inst);
+                break;
+            case PRT:
+                ret = proc_prt(inst);
+                break;
+            case SCN:
+                ret = proc_scn(inst);
+                break;
+            case JMP:
+                ret = proc_jmp(inst);
+                break;
+            case CAL:
+                ret = proc_cal(inst);
+                break;
+            case MVH:
+                ret = proc_mvh(inst);
+                break;
+            case MVL:
+                ret = proc_mvl(inst);
+                break;
+            case ADD:
+                ret = proc_add(inst);
+                break;
+            case SUB:
+                ret = proc_sub(inst);
+                break;
+            case MUL:
+                ret = proc_mul(inst);
+                break;
+            case SLA:
+                ret = proc_sla(inst);
+                break;
+            case SRA:
+                ret = proc_sra(inst);
+                break;
+            case INV:
+                ret = proc_inv(inst);
+                break;
+            case AND:
+                ret = proc_and(inst);
+                break;
+            case OOR:
+                ret = proc_oor(inst);
+                break;
+            case XOR:
+                ret = proc_xor(inst);
+                break;
+            case SLL:
+                ret = proc_sll(inst);
+                break;
+            case SRL:
+                ret = proc_srl(inst);
+                break;
+            case CTD:
+                ret = proc_ctd(inst);
+                break;
+            case SQR:
+                ret = proc_sqr(inst);
+                break;
+            case NEG:
+                ret = proc_neg(inst);
+                break;
+            case NOP:
+                break;
+            case HLT:
+                ret = proc_hlt(inst);
+                break;
+        }
         if (!ret) {
             this->error = true;
-            cerr << "an error happend at line " << inst ->line << endl;
+            cerr << "an error happend at line " << inst->line << endl;
         }
     }
 
@@ -170,147 +276,5 @@ void SingleClockSimulation::step() {
         halted = true;
         cerr << "halted at line " << inst->line << endl;
     }
-}
-
-int SingleClockSimulation::fetch_r(Opland* o) {
-    return this.r[o->index];
-}
-
-float SingleClockSimulation::fetch_r(Opland* o) {
-    return this.f[o->index];
-}
-
-void SingleClockSimulation::fetch_r(Opland* o, int v) {
-    if (o->index > 0) {
-        r[o->index] = v;
-    }
-    if (o->index >= 32) {
-        f[o->index] = v;
-    }
-}
-
-void SingleClockSimulation::fetch_r(Opland* o, float v) {
-    if (o->index > 0) {
-        f[o->index] = v;
-    }
-    if (o->index >= 32) {
-        r[o->index] = v;
-    }
-}
-
-bool SingleClockSimulation::proc_mov(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_mif(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_mfi(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_ldw(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_ldf(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_stw(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_stf(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_prt(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_scn(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_jmp(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_cal(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_mvh(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_mvl(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_add(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_sub(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_mul(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_sla(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_sra(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_inv(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_and(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_oor(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_xor(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_sll(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_srl(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_ctd(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_sqr(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_neg(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_nop(Instruction* inst) {
-    return true;
-}
-
-bool SingleClockSimulation::proc_hlt(Instruction* inst) {
-    return true;
 }
 

@@ -11,7 +11,7 @@ typedef bool (LP_PROC)(Instruction*);
 class SingleClockSimulation : public Simulation {
 public:
     // simulation fields
-    int pc;
+    unsigned int pc;
     int* r;
     float* f;
     int* ram;
@@ -35,12 +35,6 @@ public:
     void finalize();
 
     void step();
-    bool willExecuteNextStep();
-
-    int fetch_r(Opland* o);
-    float fetch_f(Opland* o);
-    void set_r(Opland* o, int v);
-    void set_f(Opland* o, float v);
 
     // instructions
     bool proc_mov(Instruction*);

@@ -81,11 +81,12 @@ int main(int argc, char* argv[]) {
         // TODO: MultiClockSimulation
     }
 
-    s->init();
-    s->run();
-    s->finalize();
-
-    delete(s);
+    if (s) {
+        s->init();
+        s->run();
+        s->finalize();
+        delete(s);
+    }
 
     return 0;
 }

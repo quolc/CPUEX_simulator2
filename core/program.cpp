@@ -25,7 +25,7 @@ bool Program::loadAssembly() {
     int l = 0;
     while (getline(ifs, str)) {
         l++;
-        cerr << str << endl;
+        cerr << l << "\t" << str << endl;
 
         // remove comment
         string::size_type comment_start = str.find("#");
@@ -44,7 +44,7 @@ bool Program::loadAssembly() {
                 cerr << "failed to parse instruction at line " << l << endl;
                 return false;
             }
-            instruction.line = instructions.size();
+            instruction.line = l;
             this->instructions.push_back(instruction);
         } else { // label
             if (str2[str2.size() - 1] != ':') {
@@ -100,14 +100,13 @@ bool Program::loadAssembly() {
 
     // h16(), l16() macro processing
     for (itr = this->instructions.begin(); itr != this->instructions.end(); itr++) {
-        cerr << itr->raw << endl;
         for (int i=0; i<MAXIMUM_OPLAND; i++) {
             Opland* opland = &(itr->oplands[i]);
             int addr = -1;
             if (opland->type == A_H || opland->type == A_L) {
                 map<string, int>::iterator i = this->labels.find(opland->label);
                 if (i == this->labels.end()) {
-                    cerr << "missing label " << opland->label << " at line" << (itr->line) << endl;
+                    cerr << "(macro processing) missing label " << opland->label << " at line " << (itr->line) << endl;
                     return false;
                 } else {
                     addr = labels[opland->label];
@@ -125,7 +124,16 @@ bool Program::loadAssembly() {
 
     // jump label validation
     for (itr = this->instructions.begin(); itr != this->instructions.end(); itr++) {
-        
+        for (int i=0; i<MAXIMUM_OPLAND; i++) {
+            Opland* opland = &(itr->oplands[i]);
+            if (opland->type == J) {
+                map<string, int>::iterator li = this->labels.find(opland->label);
+                if (li == this->labels.end()) {
+                    cerr << "(jump label validation) missing label " << opland->label << " at line " << (itr->line) << endl;
+                    return false;
+                }
+            }
+        }
     }
 
     if (l==0) return false;
